@@ -13,5 +13,6 @@ jobs:
         run: |
           touch file1
           echo " hello kroger team" > file1
+          date
           cat file1
       
