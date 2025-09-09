@@ -3,9 +3,15 @@ name: new code kroger
 on: [push]
 
 jobs:
-  build:  # You must name the job (e.g., "build")
+  build: 
     runs-on: ubuntu-latest
 
     steps:
-      - name: wel-come  # Add a space after "-"
+      - name: wel-come 
         run: echo "hello rohit"
+      - name: adding new file
+        run: |
+          touch file1
+          echo " hello kroger team" > file1
+          cat file1
+      
