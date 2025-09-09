@@ -1,0 +1,12 @@
+name: new code kroger
+
+on: [push]
+
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    -name: wel-come
+      run: echo "hello rohit"
+  
+
+
