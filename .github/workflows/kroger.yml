@@ -14,9 +14,6 @@ jobs:
           touch file1
           echo " hello kroger team" > file1
           date
-jobs:
-  build: 
-    runs-on: ubuntu-latest
 
     steps:
       - name: ipmapping
