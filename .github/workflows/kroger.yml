@@ -3,10 +3,9 @@ name: new code kroger
 on: [push]
 
 jobs:
-  runs-on: ubuntu-latest
-  steps:
-    -name: wel-come
-      run: echo "hello rohit"
-  
+  build:  # You must name the job (e.g., "build")
+    runs-on: ubuntu-latest
 
-
+    steps:
+      - name: wel-come  # Add a space after "-"
+        run: echo "hello rohit"
