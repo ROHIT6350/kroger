@@ -14,5 +14,18 @@ jobs:
           touch file1
           echo " hello kroger team" > file1
           date
-          cat file1
+jobs:
+  build: 
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ipmapping
+        run: echo "hostname"
+      - name: checking the hostname
+        run: |
+          hostnamectl
+          cat /etc/resolv.conf
+          ifconfig
+          cat /etc/sysconfig/network-scripts
+          timedatectl
       
