@@ -9,20 +9,19 @@ jobs:
     steps:
       - name: wel-come 
         run: echo "hello rohit"
+
       - name: adding new file
         run: |
           touch file1
           echo " hello kroger team" > file1
           date
 
-    steps:
       - name: ipmapping
         run: echo "hostname"
+
       - name: checking the hostname
         run: |
           hostnamectl
           cat /etc/resolv.conf
-          ifconfig
-          cat /etc/sysconfig/network-scripts
+          ip a  
           timedatectl
-      
