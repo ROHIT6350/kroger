@@ -1,6 +1,6 @@
 name: new code kroger
 
-on: [push]
+on:
 
 jobs:
   build: 
