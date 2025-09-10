@@ -3,7 +3,6 @@ name: Install XAMPP on Main Server
 on: [push]
 
 jobs:
-  install-xampp:
     runs-on: ubuntu-latest
 
     steps:
