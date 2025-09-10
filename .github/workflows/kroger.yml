@@ -1,27 +1,31 @@
-name: new code kroger
+name: Test NTP Server
 
 on: [push]
 
 jobs:
-  build: 
+  ntp-server-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: wel-come 
-        run: echo "hello rohit"
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: adding new file
-        run: |
-          touch file1
-          echo " hello kroger team" > file1
-          date
+    - name: Install chrony (NTP server)
+      run: |
+        sudo apt update
+        sudo apt install -y chrony
 
-      - name: ipmapping
-        run: echo "hostname"
+    - name: Configure chrony as a local NTP server
+      run: |
+        sudo bash -c 'cat > /etc/chrony/chrony.conf' <<EOF
+        allow 127.0.0.1
+        bindaddress 127.0.0.1
+        local stratum 10
+        manual
+        logdir /var/log/chrony
+        EOF
 
-      - name: checking the hostname
-        run: |
-          hostnamectl
-          cat /etc/resolv.conf
-          ip a  
-          timedatectl
+    - name: Start chrony service
+      run: |
+        sudo chronyd -d &
+        sleep 5  # Give it time to s
