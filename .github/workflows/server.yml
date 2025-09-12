@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   install-xampp: 
-    runs-on: ubuntu-latest
+    runs-on: slef-hosted
 
     steps:
       - name: Checkout repository
