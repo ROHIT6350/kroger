@@ -10,56 +10,42 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Create SSH key file
-      run: |
-        echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key
-        chmod 600 ssh_key
+   name: Install XAMPP on Ubuntu Server
 
-    - name: Install XAMPP on server via SSH
-      run: |
-        ssh -i ssh_key \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-        # Check if XAMPP already installed
-        if [ -d "/opt/lampp" ]; then
-          echo " XAMPP already installed"
-          sudo /opt/lampp/lampp status
-          exit 0
-        fi
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "Target server hostname or IP"
+        required: true
+      user:
+        description: "SSH username"
+        required: true
 
-        echo "[INFO] Installing dependencies"
-        sudo apt update
-        sudo apt install -y wget
+jobs:
+  install-xampp:
+    runs-on: self-hosted
 
-        echo "[INFO] Downloading XAMPP installer"
-        wget https://www.apachefriends.org/xampp-files/8.2.12/xampp-linux-x64-8.2.12-0-installer.run -O /tmp/xampp-installer.run
-        
-        if [ ! -f "/tmp/xampp-installer.run" ]; then
-          echo " Failed to download XAMPP"
-          exit 1
-        fi
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-        echo "[INFO] Making installer executable"
-        chmod +x /tmp/xampp-installer.run
-        
-        echo "[INFO] Installing XAMPP silently"
-        sudo /tmp/xampp-installer.run --mode unattended
-        
-        echo "[INFO] Starting XAMPP service"
-        sudo /opt/lampp/lampp start
-        
-        echo "[INFO] Checking XAMPP status"
-        sudo /opt/lampp/lampp status
+      - name: Install XAMPP on server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ github.event.inputs.server }}
+          username: ${{ github.event.inputs.user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Downloading and installing XAMPP..."
+            apt-get update && apt-get install -y curl
+            chmod +x /tmp/xampp-linux-x64-8.0.30-0-installer.run
+            sudo /tmp/xampp-linux-x64-8.0.30-0-installer.run --mode unattended
+            echo "XAMPP installed successfully."
+            # Start XAMPP service
+            sudo /opt/lampp/lampp start
+            echo "XAMPP started."
 
-        echo "[INFO] Setting permissions"
-        sudo chown -R $USER:$USER /opt/lampp/htdocs/
-
-        echo "XAMPP installed successfully on ${{ secrets.SERVER_IP }}"
-        echo " Access: http://${{ secrets.SERVER_IP }}/"
-        EOF
-
-    - name: Cleanup SSH key
-      run: rm -f ssh_key
 
     - name: Verify installation
       run: |
