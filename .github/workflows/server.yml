@@ -14,7 +14,7 @@ on:
 
 jobs:
   install-xampp:
-    runs-on: self-hosted  # Use a self-hosted runner in your private network
+    runs-on: self-hosted 
 
     steps:
       - name: Checkout repository
@@ -23,8 +23,8 @@ jobs:
       - name: Install XAMPP Server via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ github.event.inputs.server_ip }}
-          username: ${{ github.event.inputs.server_user }}
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
