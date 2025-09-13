@@ -6,15 +6,13 @@ on:
       server_ip:
         description: 'Target Server IP Address'
         required: true
-        
       server_user:
         description: 'Server SSH Username'
         required: true
-        
 
 jobs:
   install-xampp:
-    runs-on: self-hosted 
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
@@ -23,25 +21,25 @@ jobs:
       - name: Install XAMPP Server via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
+          host: ${{ secrets.SERVER_IP }}  
+          username: ${{ secrets.SERVER_USER }} 
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
             # Update system
             sudo apt-get update
-
+            
             # Download XAMPP installer using wget
             wget https://www.apachefriends.org/xampp-files/8.2.0/xampp-linux-x64-8.2.0-0-installer.run -O /tmp/xampp-installer.run
-
+            
             # Make installer executable
             chmod +x /tmp/xampp-installer.run
-
+            
             # Install XAMPP silently
             sudo /tmp/xampp-installer.run --mode unattended
-
+            
             # Start XAMPP
             sudo /opt/lampp/lampp start
-
+            
             # Check XAMPP status
             sudo /opt/lampp/lampp status
