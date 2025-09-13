@@ -20,19 +20,41 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Debug - Show SSH key info
+      run: |
+        echo "SSH key preview:"
+        echo "${{ secrets.SERVER_SSH_KEY }}" | head -2
+        echo "Key length: $(echo '${{ secrets.SERVER_SSH_KEY }}' | wc -c) characters"
+
     - name: Create SSH key file
       run: |
-        echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key
+        # Create the SSH key file with proper formatting
+        cat > ssh_key << 'EOF'
+        ${{ secrets.SERVER_SSH_KEY }}
+        EOF
         chmod 600 ssh_key
+        echo "SSH key file created with permissions:"
+        ls -la ssh_key
+
+    - name: Test SSH connection
+      run: |
+        echo "Testing SSH connection to ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }}..."
+        timeout 30s ssh -i ssh_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            -o BatchMode=yes \
+            ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} \
+            "echo 'SSH connection successful' && hostname"
 
     - name: Install XAMPP via SSH
       run: |
         ssh -i ssh_key \
             -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
             ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} << 'EOF'
           # Check if XAMPP already installed
           if [ -d "/opt/lampp" ]; then
-            echo "XAMPP already installed"
+            echo " XAMPP already installed"
             sudo /opt/lampp/lampp status
             exit 0
           fi
@@ -44,11 +66,16 @@ jobs:
           echo "[INFO] Downloading XAMPP installer"
           wget https://www.apachefriends.org/xampp-files/8.2.12/xampp-linux-x64-8.2.12-0-installer.run -O /tmp/xampp-installer.run
           
+          if [ ! -f "/tmp/xampp-installer.run" ]; then
+            echo "Failed to download XAMPP installer"
+            exit 1
+          fi
+
           echo "[INFO] Making installer executable"
           chmod +x /tmp/xampp-installer.run
           
           echo "[INFO] Installing XAMPP silently"
-          sudo /tmp/xampp-installer.run --mode unattended
+          sudo /tmp/xampp-installer.run --mode unattended --unattendedmodeui minimal
           
           echo "[INFO] Starting XAMPP service"
           sudo /opt/lampp/lampp start
@@ -57,4 +84,12 @@ jobs:
           sudo /opt/lampp/lampp status
           
           echo " XAMPP installed successfully on $(hostname)"
+          echo " Access: http://$(hostname -I | awk '{print $1}')/"
         EOF
+
+    - name: Cleanup SSH key
+      run: rm -f ssh_key
+
+    - name: Completion message
+      run: |
+        echo "Workflow completed for ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }}"
