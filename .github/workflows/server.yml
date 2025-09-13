@@ -10,7 +10,7 @@ on:
       server_user:
         description: 'Server username'
         required: true
-        default: 'root'
+        default: 'rohit'
 
 jobs:
   install-xampp:
