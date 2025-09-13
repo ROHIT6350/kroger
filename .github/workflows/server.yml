@@ -4,92 +4,44 @@ on:
   workflow_dispatch:
     inputs:
       server_ip:
-        description: 'Server IP address'
+        description: 'Target Server IP Address'
         required: true
         default: '192.168.0.132'
       server_user:
-        description: 'Server username'
+        description: 'Server SSH Username'
         required: true
         default: 'rohit'
 
 jobs:
   install-xampp:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # Use a self-hosted runner in your private network
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Debug - Show SSH key info
-      run: |
-        echo "SSH key preview:"
-        echo "${{ secrets.SERVER_SSH_KEY }}" | head -2
-        echo "Key length: $(echo '${{ secrets.SERVER_SSH_KEY }}' | wc -c) characters"
+      - name: Install XAMPP Server via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ github.event.inputs.server_ip }}
+          username: ${{ github.event.inputs.server_user }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            # Update system
+            sudo apt-get update
 
-    - name: Create SSH key file
-      run: |
-        # Create the SSH key file with proper formatting
-        cat > ssh_key << 'EOF'
-        ${{ secrets.SERVER_SSH_KEY }}
-        EOF
-        chmod 600 ssh_key
-        echo "SSH key file created with permissions:"
-        ls -la ssh_key
+            # Download XAMPP installer using wget
+            wget https://www.apachefriends.org/xampp-files/8.2.0/xampp-linux-x64-8.2.0-0-installer.run -O /tmp/xampp-installer.run
 
-    - name: Test SSH connection
-      run: |
-        echo "Testing SSH connection to ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }}..."
-        timeout 30s ssh -i ssh_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=10 \
-            -o BatchMode=yes \
-            ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} \
-            "echo 'SSH connection successful' && hostname"
+            # Make installer executable
+            chmod +x /tmp/xampp-installer.run
 
-    - name: Install XAMPP via SSH
-      run: |
-        ssh -i ssh_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} << 'EOF'
-          # Check if XAMPP already installed
-          if [ -d "/opt/lampp" ]; then
-            echo " XAMPP already installed"
+            # Install XAMPP silently
+            sudo /tmp/xampp-installer.run --mode unattended
+
+            # Start XAMPP
+            sudo /opt/lampp/lampp start
+
+            # Check XAMPP status
             sudo /opt/lampp/lampp status
-            exit 0
-          fi
-
-          echo "[INFO] Installing dependencies"
-          sudo apt update
-          sudo apt install -y wget
-
-          echo "[INFO] Downloading XAMPP installer"
-          wget https://www.apachefriends.org/xampp-files/8.2.12/xampp-linux-x64-8.2.12-0-installer.run -O /tmp/xampp-installer.run
-          
-          if [ ! -f "/tmp/xampp-installer.run" ]; then
-            echo "Failed to download XAMPP installer"
-            exit 1
-          fi
-
-          echo "[INFO] Making installer executable"
-          chmod +x /tmp/xampp-installer.run
-          
-          echo "[INFO] Installing XAMPP silently"
-          sudo /tmp/xampp-installer.run --mode unattended --unattendedmodeui minimal
-          
-          echo "[INFO] Starting XAMPP service"
-          sudo /opt/lampp/lampp start
-          
-          echo "[INFO] Checking XAMPP status"
-          sudo /opt/lampp/lampp status
-          
-          echo " XAMPP installed successfully on $(hostname)"
-          echo " Access: http://$(hostname -I | awk '{print $1}')/"
-        EOF
-
-    - name: Cleanup SSH key
-      run: rm -f ssh_key
-
-    - name: Completion message
-      run: |
-        echo "Workflow completed for ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }}"
