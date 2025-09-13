@@ -20,7 +20,7 @@ jobs:
       - name: Create SSH key file
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
-          chmod 777 ssh_key
+          chmod 600 ssh_key
 
       - name: Install NTP server
         run: |
