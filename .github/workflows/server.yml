@@ -1,35 +1,35 @@
-name: Install XAMPP on Ubuntu Server
+name: Install NTP Server
 
 on:
   workflow_dispatch:
     inputs:
-      server:
-        description: "Target server hostname or IP"
+      server_ip:
+        description: 'Server IP address'
         required: true
-      user:
-        description: "SSH username"
+        default: '192.168.0.132'
+      server_user:
+        description: 'Server username'
         required: true
+        default: 'rohit'
 
 jobs:
-  install-xampp:
+  install-ntp-server:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 777 ssh_key
 
-      - name: Install XAMPP on server
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ github.event.inputs.server }}
-          username: ${{ github.event.inputs.user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "Downloading and installing XAMPP..."
-            apt-get update && apt-get install -y curl
-            chmod +x /tmp/xampp-linux-x64-8.0.30-0-installer.run
-            sudo /tmp/xampp-linux-x64-8.0.30-0-installer.run --mode unattended
-            echo "XAMPP installed successfully."
-            # Start XAMPP service
-            sudo /opt/lampp/lampp start
-            echo "XAMPP started."
+      - name: Install NTP server
+        run: |
+          ssh -i ssh_key \
+              -o StrictHostKeyChecking=no \
+              ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} bash -c "
+                sudo apt-get update &&
+                sudo apt-get install -y ntp &&
+                sudo systemctl start ntp &&
+                sudo systemctl enable ntp &&
+                sudo systemctl status ntp --no-pager
+              "
