@@ -29,17 +29,13 @@ jobs:
         port: 22
         script: |
           echo "[INFO] Updating package list"
-          sudo apt update
+          sudo apt-get update
           
           echo "[INFO] Installing chrony (NTP server)"
-          sudo apt install -y chrony
+          sudo apt-get install -y chrony
           
           echo "[INFO] Configuring chrony as NTP server"
           sudo bash -c 'cat > /etc/chrony/chrony.conf' <<EOF
-          server 0.pool.ntp.org iburst
-          server 1.pool.ntp.org iburst
-          server 2.pool.ntp.org iburst
-          server 3.pool.ntp.org iburst
           allow ${{ github.event.inputs.server_ip }}/24
           bindaddress ${{ github.event.inputs.server_ip }}
           local stratum 10
