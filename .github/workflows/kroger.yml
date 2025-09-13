@@ -1,4 +1,4 @@
-name: Install NTP on Server
+name: Test NTP Server
 
 on:
   workflow_dispatch:
@@ -13,40 +13,52 @@ on:
         default: 'root'
 
 jobs:
-  install-ntp:
-    runs-on: self-hosted
+  ntp-server-test:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install and configure NTP via SSH
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ github.event.inputs.server_ip }}
-          username: ${{ github.event.inputs.server_user }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          script: |
-            echo "[INFO] Updating package list"
-            sudo apt-get update
-            
-            echo "[INFO] Installing NTP package"
-            sudo apt-get install -y ntp
-            
-            echo "[INFO] Starting NTP service"
-            sudo systemctl start ntp
-            
-            echo "[INFO] Enabling NTP to start on boot"
-            sudo systemctl enable ntp
-            
-            echo "[INFO] Checking NTP service status"
-            sudo systemctl status ntp --no-pager
-            
-            echo "[INFO] Checking NTP synchronization"
-            ntpq -p
-            
-            echo "[INFO] Checking current time and sync status"
-            timedatectl status
-            
-            echo "NTP installation completed successfully!"
+    - name: Install and configure NTP on remote server via SSH
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ github.event.inputs.server_ip }}
+        username: ${{ github.event.inputs.server_user }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        script: |
+          echo "[INFO] Updating package list"
+          sudo apt update
+          
+          echo "[INFO] Installing chrony (NTP server)"
+          sudo apt install -y chrony
+          
+          echo "[INFO] Configuring chrony as NTP server"
+          sudo bash -c 'cat > /etc/chrony/chrony.conf' <<EOF
+          server 0.pool.ntp.org iburst
+          server 1.pool.ntp.org iburst
+          server 2.pool.ntp.org iburst
+          server 3.pool.ntp.org iburst
+          allow ${{ github.event.inputs.server_ip }}/24
+          bindaddress ${{ github.event.inputs.server_ip }}
+          local stratum 10
+          logdir /var/log/chrony
+          EOF
+          
+          echo "[INFO] Restarting chrony service"
+          sudo systemctl restart chrony
+          sudo systemctl enable chrony
+          
+          echo "[INFO] Allowing NTP through firewall"
+          sudo ufw allow 123/udp
+          
+          echo "[INFO] Checking chrony status"
+          sudo systemctl status chrony --no-pager
+          
+          echo "[INFO] Verifying NTP synchronization"
+          sleep 3
+          chronyc sources
+          chronyc tracking
+          
+          echo " NTP server configured on ${{ github.event.inputs.server_ip }}"
