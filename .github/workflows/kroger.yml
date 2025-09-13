@@ -1,31 +1,52 @@
-name: Test NTP Server
+name: Install NTP on Server
 
-on: [push]
+on:
+  workflow_dispatch:
+    inputs:
+      server_ip:
+        description: 'Server IP address'
+        required: true
+        default: '192.168.0.132'
+      server_user:
+        description: 'Server username'
+        required: true
+        default: 'root'
 
 jobs:
-  ntp-server-test:
-    runs-on: ubuntu-latest
+  install-ntp:
+    runs-on: self-hosted
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install chrony (NTP server)
-      run: |
-        sudo apt update
-        sudo apt install -y chrony
-
-    - name: Configure chrony as a local NTP server
-      run: |
-        sudo bash -c 'cat > /etc/chrony/chrony.conf' <<EOF
-        allow 127.0.0.1
-        bindaddress 127.0.0.1
-        local stratum 10
-        manual
-        logdir /var/log/chrony
-        EOF
-
-    - name: Start chrony service
-      run: |
-        sudo chronyd -d &
-        sleep 5  # Give it time to s
+      - name: Install and configure NTP via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ github.event.inputs.server_ip }}
+          username: ${{ github.event.inputs.server_user }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            echo "[INFO] Updating package list"
+            sudo apt-get update
+            
+            echo "[INFO] Installing NTP package"
+            sudo apt-get install -y ntp
+            
+            echo "[INFO] Starting NTP service"
+            sudo systemctl start ntp
+            
+            echo "[INFO] Enabling NTP to start on boot"
+            sudo systemctl enable ntp
+            
+            echo "[INFO] Checking NTP service status"
+            sudo systemctl status ntp --no-pager
+            
+            echo "[INFO] Checking NTP synchronization"
+            ntpq -p
+            
+            echo "[INFO] Checking current time and sync status"
+            timedatectl status
+            
+            echo "NTP installation completed successfully!"
