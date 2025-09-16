@@ -17,7 +17,6 @@ jobs:
     steps:
       - name: Checkout Repo A (current repo)
         uses: actions/checkout@v3
-
       - name: Checkout Repo B (private via GitHub deploy key)
         uses: actions/checkout@v3
         with:
