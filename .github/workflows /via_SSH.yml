@@ -15,36 +15,41 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Repo A (current repo)
+      - name: Checkout current repo
         uses: actions/checkout@v3
 
-      - name: Checkout Repo B (private via GitHub deploy key)
+      - name: Checkout private repository
         uses: actions/checkout@v3
         with:
           repository: ROHIT6350/test_private 
-          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}   # 👈 deploy key for GitHub
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }} 
           ref: main
-          path: repo-b
+          path: private-repo
           persist-credentials: false
-          ssh-strict: false
 
-      - name: Debug (list files from Repo B)
-        run: ls -R repo-b
+      - name: List files from private repo
+        run: ls -la private-repo/
 
       - name: Test SSH connection to server
         run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
-          chmod 600 id_rsa
-          ssh -o StrictHostKeyChecking=no -i id_rsa ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} "echo Connected OK"
+          echo "${{ secrets.SERVER_SSH_KEY }}" > server_key
+          chmod 600 server_key
+          ssh -o StrictHostKeyChecking=no -i server_key ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} "echo 'SSH connection successful'"
 
-      - name: Copy file from Repo B to server
+      - name: Copy file to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ github.event.inputs.server_ip }}
-          username: ${{ github.event.inputs.server_user }}
-          key: ${{ secrets.SERVER_SSH_KEY }}     # 👈 key for target server
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "repo-b/index.php"
+          source: "private-repo/index.php"
           target: "/data"
           overwrite: true
-          debug: true
+
+      - name: Verify deployment
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > server_key
+          chmod 600 server_key
+          ssh -o StrictHostKeyChecking=no -i server_key ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} "ls -la /data/index.php && echo 'Deployment successful!'"
+
