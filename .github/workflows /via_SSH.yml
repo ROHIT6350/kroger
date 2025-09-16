@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Repo B (private via GitHub deploy key)
         uses: actions/checkout@v3
         with:
-          repository: triovative-bot/daypredict
+          repository: ROHIT6350/test_private 
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}   # 👈 deploy key for GitHub
           ref: main
           path: repo-b
