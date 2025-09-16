@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > server_key
           chmod 600 server_key
-          ssh -o StrictHostKeyChecking=no -i server_key ${{ github.event.inputs.server_user }}@${{ github.event.inputs.server_ip }} "echo 'SSH connection successful'"
+          ssh -o StrictHostKeyChecking=no -i server_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo 'SSH connection successful'"
 
       - name: Copy file to server
         uses: appleboy/scp-action@v0.1.7
