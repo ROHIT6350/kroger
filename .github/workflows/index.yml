@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ROHIT6350/test_private 
-          ssh-key: ${{ secrets.PAT_TOKEN }} 
+          ssh-key: ${{ GH_DEPLOY_PUB_KEY }} 
           ref: main
           path: repo-b
           persist-credentials: false
