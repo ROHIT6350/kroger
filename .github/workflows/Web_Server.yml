@@ -48,7 +48,9 @@ jobs:
 
       - name: Extract Artifact
         run: |
-          tar -xzf website.tar.gz
+         mkdir -p extracted
+         tar -xzf website.tar.gz -C extracted
+
 
       - name: Copy Files to XAMPP Server via SSH
         run: |
