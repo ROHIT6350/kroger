@@ -3,7 +3,7 @@ name: CI for XAMPP Web Server
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch:   # allow manual trigger
 
 jobs:
   build:
@@ -18,18 +18,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ROHIT6350/test_private-
-          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}   # 👈 deploy key for GitHub
           ref: main
           path: web
           persist-credentials: false
           ssh-strict: false
 
-      - name: Debug Folder Structure
-        run: ls -R web
-
       - name: Archive Website Code
         run: |
-          tar -czf website.tar.gz -C web .
+          tar -czf website.tar.gz -C web/website .
 
       - name: Upload Website Artifact
         uses: actions/upload-artifact@v4
@@ -53,25 +50,15 @@ jobs:
         run: |
           tar -xzf website.tar.gz
 
-      - name: Setup SSH Key
+      - name: Copy Files to XAMPP Server via SSH
         run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
-          chmod 600 id_rsa
-
-      - name: Test SSH Connection
-        run: |
-          ssh -o StrictHostKeyChecking=no -i id_rsa \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo Connected OK"
-
-      - name: Deploy Website to XAMPP Server
-        run: |
-          scp -i id_rsa -o StrictHostKeyChecking=no -r web/* \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/opt/lampp/htdocs/
+          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r * ${{ secrets.USER }}@${{ secrets.IP }}:/opt/lampp/htdocs/
 
       - name: Restart Apache in XAMPP
         run: |
-          ssh -i id_rsa -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
             "sudo /opt/lampp/lampp restartapache"
 
   test:
