@@ -1,16 +1,4 @@
-name: Install XAMPP on Main Server
-
-on: [push]
-
-jobs:
-  install-xampp:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-   name: Install XAMPP on Ubuntu Server
+name: Install XAMPP on Ubuntu Server
 
 on:
   workflow_dispatch:
@@ -24,29 +12,33 @@ on:
 
 jobs:
   install-xampp:
-    runs-on: self-hosted
+    runs-on: self-hosted  # GitHub-hosted runner
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install XAMPP on server
+      - name: Install XAMPP on remote server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ github.event.inputs.server }}
           username: ${{ github.event.inputs.user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "Downloading and installing XAMPP..."
-            apt-get update && apt-get install -y curl
-            chmod +x /tmp/xampp-linux-x64-8.0.30-0-installer.run
-            sudo /tmp/xampp-linux-x64-8.0.30-0-installer.run --mode unattended
-            echo "XAMPP installed successfully."
-            # Start XAMPP service
+            echo "Installing dependencies..."
+            sudo apt-get update
+            sudo apt-get install -y curl
+            
+            echo "Downloading XAMPP installer..."
+            curl -o /tmp/xampp-installer.run https://www.apachefriends.org/xampp-files/8.0.30/xampp-linux-x64-8.0.30-0-installer.run
+
+            echo "Making installer executable..."
+            chmod +x /tmp/xampp-installer.run
+
+            echo "Running XAMPP installer in unattended mode..."
+            sudo /tmp/xampp-installer.run --mode unattended
+
+            echo "Starting XAMPP..."
             sudo /opt/lampp/lampp start
-            echo "XAMPP started."
 
-
-    - name: Verify installation
-      run: |
-        echo "XAMPP installation completed on server: ${{ secrets.SERVER_IP }}"
+            echo "XAMPP installed and started successfully."
