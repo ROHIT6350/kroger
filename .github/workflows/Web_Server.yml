@@ -54,9 +54,11 @@ jobs:
 
       - name: Copy Files to XAMPP Server via SSH
         run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          scp -i private_key.pem -o StrictHostKeyChecking=no -r * ${{ secrets.USER }}@${{ secrets.IP }}:/opt/lampp/htdocs/
+         echo "${{ secrets.SERVER_SSH_KEY }}" > private_key.pem
+         chmod 600 private_key.pem
+         echo "Connecting to ${{ secrets.USER }}@${{ secrets.IP }}"
+         scp -i private_key.pem -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.USER }}@${{ secrets.IP }}:/opt/lampp/htdocs/
+
 
       - name: Restart Apache in XAMPP
         run: |
