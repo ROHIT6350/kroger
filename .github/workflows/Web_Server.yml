@@ -56,13 +56,13 @@ jobs:
         run: |
          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key.pem
          chmod 600 private_key.pem
-         echo "Connecting to ${{ secrets.USER }}@${{ secrets.IP }}"
-         scp -i private_key.pem -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.USER }}@${{ secrets.IP }}:/opt/lampp/htdocs/
+         echo "Connecting to ${{ secrets.USER }}@${{ secrets.SERVER_IP }}"
+         scp -i private_key.pem -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.USER }}@${{ secrets.SERVER_IP }}:/opt/lampp/htdocs/
 
 
       - name: Restart Apache in XAMPP
         run: |
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.SERVER_IP }} \
             "sudo /opt/lampp/lampp restartapache"
 
   test:
