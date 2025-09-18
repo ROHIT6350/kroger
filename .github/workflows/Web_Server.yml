@@ -52,12 +52,13 @@ jobs:
          tar -xzf website.tar.gz -C extracted
 
 
-      - name: Copy Files to XAMPP Server via SSH
+      - name: Test SSH connection
         run: |
-         echo "${{ secrets.SERVER_SSH_KEY }}" > private_key.pem
-         chmod 600 private_key.pem
-         echo "Connecting to ${{ secrets.USER }}@${{ secrets.SERVER_IP }}"
-         scp -i private_key.pem -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.USER }}@${{ secrets.SERVER_IP }}:/opt/lampp/htdocs/
+          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
+          chmod 600 id_rsa
+          ssh -o StrictHostKeyChecking=no -i id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo Connected OK"
+                scp -i private_key.pem -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.USER }}@${{ secrets.SERVER_IP }}:/opt/lampp/htdocs/
 
 
       - name: Restart Apache in XAMPP
