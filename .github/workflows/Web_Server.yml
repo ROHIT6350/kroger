@@ -73,7 +73,7 @@ jobs:
       - name: Restart Apache in XAMPP
         run: |
           ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "echo '${{ secrets.SERVER_PASS }}' | sudo -S /opt/lampp/lampp restartapache"
+            "echo '${{ secrets.SERVER_PASS }}' | sudo -S systemctl restart apache2"
 
   test:
     name: Test Stage - Validate Website
