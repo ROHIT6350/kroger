@@ -6,19 +6,19 @@ on:
   workflow_dispatch:   # allow manual trigger
 
 jobs:
-  build:
+  build:            # Collect website code from repositories.
     name: Build Stage - Checkout Repositories
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Repo A (CI pipeline repo)
+      - name: Checkout Repo A (public repo)    # cloning your repository
         uses: actions/checkout@v3
 
-      - name: Checkout Repo B (private via GitHub deploy key)
+      - name: Checkout Repo B (test_private via GitHub deploy key)  # cloning private repo
         uses: actions/checkout@v3
         with:
           repository: ROHIT6350/test_private-
-          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}   # 👈 deploy key for GitHub
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
           ref: main
           path: web
           persist-credentials: false
@@ -44,33 +44,32 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: website-code
-          path: web
+          path: .
 
       - name: Extract Artifact
         run: |
-         mkdir -p extracted
-         tar -xzf website.tar.gz -C extracted
+          tar -xzf website.tar.gz
 
-
-      - name: Test SSH and Copy Files
+      - name: Upload Files to Staging Directory (no sudo needed)
         run: |
-         echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
-         chmod 600 id_rsa
+          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
+          chmod 600 id_rsa
+          rm -rf .git .github web/.git web/.github
+          scp -i id_rsa -o StrictHostKeyChecking=no -r * \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/deploy/
 
-         echo "Testing SSH connection..."
-         ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo Connected OK"
-
-         echo "Creating /opt/lampp/htdocs directory if it doesn't exist..."
-         ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "sudo mkdir -p /opt/lampp/htdocs && sudo chown -R $USER:$USER /opt/lampp/htdocs"
-
-         echo "Copying files to /opt/lampp/htdocs/ ..."
-         scp -i id_rsa -o StrictHostKeyChecking=no -r extracted/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/opt/lampp/htdocs/
-
-
+      - name: Move Files into XAMPP htdocs (with sudo)
+        run: |
+          ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
+            "sudo mkdir -p /opt/lampp/htdocs && \
+             sudo rm -rf /opt/lampp/htdocs/* && \
+             sudo mv /home/${{ secrets.SERVER_USER }}/deploy/* /opt/lampp/htdocs/ && \
+             sudo chown -R admin:admin /opt/lampp/htdocs && \
+             sudo chmod -R 755 /opt/lampp/htdocs"
 
       - name: Restart Apache in XAMPP
         run: |
-          ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.SERVER_IP }} \
+          ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
             "sudo /opt/lampp/lampp restartapache"
 
   test:
@@ -82,6 +81,6 @@ jobs:
       - name: Wait for Web Server
         run: sleep 10
 
-      - name: Test Website URL
+      - name: Test Website on Remote Server
         run: |
-          curl -I http://${{ secrets.SERVER_IP }} | grep "200 OK" || exit 1
+          curl -IL http://${{ secrets.HOST }} | grep "200 OK" || exit 
