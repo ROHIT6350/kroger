@@ -11,13 +11,13 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Repo A (public repo)    # cloning your repository
+      - name: Checkout Repo A (public repo)
         uses: actions/checkout@v3
 
-      - name: Checkout Repo B (test_private via GitHub deploy key)  # cloning private repo
+      - name: Checkout Repo B (test_private via GitHub deploy key)
         uses: actions/checkout@v3
         with:
-          repository: ROHIT6350/test_private-
+          repository: ROHIT6350/test_private   # ✅ removed trailing hyphen
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
           ref: main
           path: web
@@ -48,6 +48,7 @@ jobs:
 
       - name: Extract Artifact
         run: |
+          rm -rf web                # ✅ cleanup before extraction
           tar -xzf website.tar.gz
 
       - name: Upload Files to Staging Directory (no sudo needed)
@@ -83,4 +84,4 @@ jobs:
 
       - name: Test Website on Remote Server
         run: |
-          curl -IL http://${{ secrets.HOST }} | grep "200 OK" || exit 
+          curl -IL http://${{ secrets.SERVER_IP }} | grep "200 OK" || exit 1
