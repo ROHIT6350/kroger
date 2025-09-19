@@ -17,7 +17,7 @@ jobs:
       - name: Checkout Repo B (test_private via GitHub deploy key)
         uses: actions/checkout@v3
         with:
-          repository: ROHIT6350/test_private-   # ✅ removed trailing hyphen
+          repository: ROHIT6350/test_private-
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
           ref: main
           path: web
@@ -48,7 +48,6 @@ jobs:
 
       - name: Extract Artifact
         run: |
-          rm -rf web                # ✅ cleanup before extraction
           tar -xzf website.tar.gz
 
       - name: Upload Files to Staging Directory (no sudo needed)
@@ -62,16 +61,16 @@ jobs:
       - name: Move Files into XAMPP htdocs (with sudo)
         run: |
           ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "sudo mkdir -p /opt/lampp/htdocs && \
-             sudo rm -rf /opt/lampp/htdocs/* && \
-             sudo mv /home/${{ secrets.SERVER_USER }}/deploy/* /opt/lampp/htdocs/ && \
-             sudo chown -R admin:admin /opt/lampp/htdocs && \
-             sudo chmod -R 755 /opt/lampp/htdocs"
+            "echo '${{ secrets.SERVER_PASS }}' | sudo -S mkdir -p /opt/lampp/htdocs && \
+             echo '${{ secrets.SERVER_PASS }}' | sudo -S rm -rf /opt/lampp/htdocs/* && \
+             echo '${{ secrets.SERVER_PASS }}' | sudo -S mv /home/${{ secrets.SERVER_USER }}/deploy/* /opt/lampp/htdocs/ && \
+             echo '${{ secrets.SERVER_PASS }}' | sudo -S chown -R admin:admin /opt/lampp/htdocs && \
+             echo '${{ secrets.SERVER_PASS }}' | sudo -S chmod -R 755 /opt/lampp/htdocs"
 
       - name: Restart Apache in XAMPP
         run: |
           ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "sudo /opt/lampp/lampp restartapache"
+            "echo '${{ secrets.SERVER_PASS }}' | sudo -S /opt/lampp/lampp restartapache"
 
   test:
     name: Test Stage - Validate Website
