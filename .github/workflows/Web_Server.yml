@@ -48,7 +48,10 @@ jobs:
 
       - name: Extract Artifact
         run: |
-          tar -xzf website.tar.gz
+          rm -rf web
+          mkdir -p web
+          tar -xzf website.tar.gz 
+      
 
       - name: Upload Files to Staging Directory (no sudo needed)
         run: |
