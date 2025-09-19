@@ -67,7 +67,7 @@ jobs:
             "echo '${{ secrets.SERVER_PASS }}' | sudo -S mkdir -p /opt/lampp/htdocs && \
              echo '${{ secrets.SERVER_PASS }}' | sudo -S rm -rf /opt/lampp/htdocs/* && \
              echo '${{ secrets.SERVER_PASS }}' | sudo -S mv /home/${{ secrets.SERVER_USER }}/deploy/* /opt/lampp/htdocs/ && \
-             echo '${{ secrets.SERVER_PASS }}' | sudo -S chown -R admin:admin /opt/lampp/htdocs && \
+             echo '${{ secrets.SERVER_PASS }}' | sudo -S chown -R rohit:rohit /opt/lampp/htdocs && \
              echo '${{ secrets.SERVER_PASS }}' | sudo -S chmod -R 755 /opt/lampp/htdocs"
 
       - name: Restart Apache in XAMPP
