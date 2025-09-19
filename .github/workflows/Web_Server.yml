@@ -17,7 +17,7 @@ jobs:
       - name: Checkout Repo B (test_private via GitHub deploy key)
         uses: actions/checkout@v3
         with:
-          repository: ROHIT6350/test_private   # ✅ removed trailing hyphen
+          repository: ROHIT6350/test_private-   # ✅ removed trailing hyphen
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
           ref: main
           path: web
