@@ -1,0 +1,17 @@
+# Start from official MongoDB base image
+FROM mongo:6.0
+
+# Set environment variables (can be overridden at runtime)
+ENV MONGO_INITDB_ROOT_USERNAME=root \
+    MONGO_INITDB_ROOT_PASSWORD=redhat
+
+# Optional: add initialization scripts
+# Any .js or .sh files placed in /docker-entrypoint-initdb.d/
+# will run when the container starts the first time
+COPY init-scripts/ /docker-entrypoint-initdb.d/
+
+# Expose MongoDB default port
+EXPOSE 27017
+
+# Use the default MongoDB entrypoint
+CMD ["mongod"]
