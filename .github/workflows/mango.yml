@@ -103,11 +103,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            docker pull $IMAGE_NAME:latest
+            docker pull rohit6350/mongo-custom:latest
             docker stop mongo-prod || true
             docker rm mongo-prod || true
             docker run -d --name mongo-prod \
               -e MONGO_INITDB_ROOT_USERNAME=root \
-              -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.SERVER_PASS }} \
-              -p 27017:27017 $IMAGE_NAME:latest
+              -e MONGO_INITDB_ROOT_PASSWORD=$SERVER_PASS \
+              -p 27017:27017 rohit6350/mongo-custom:latest
+
