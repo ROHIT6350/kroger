@@ -1,4 +1,4 @@
-name: Build, Test & Deploy MongoDB Image
+name: Build, Test & Push MongoDB Image
 
 on:
   push:
@@ -10,12 +10,12 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted]   # ensure runner has Docker
+    runs-on: self-hosted  
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -23,7 +23,7 @@ jobs:
 
       - name: Build & Push MongoDB Image
         run: |
-          docker build -t $IMAGE_NAME:latest .
+          docker build -f Dockerfile.mangoDB -t $IMAGE_NAME:latest .
           docker tag $IMAGE_NAME:latest $IMAGE_NAME:${{ github.sha }}
           docker push $IMAGE_NAME:latest
           docker push $IMAGE_NAME:${{ github.sha }}
@@ -37,7 +37,7 @@ jobs:
             -e MONGO_INITDB_ROOT_PASSWORD=$MONGO_ROOT_PASSWORD \
             -p 27017:27017 $IMAGE_NAME:latest
 
-          echo "Waiting for MongoDB and all init scripts..."
+          echo "Waiting for MongoDB to start..."
           for i in {1..15}; do
             if docker exec mongo-test mongosh --eval 'db.runCommand({ping:1})' admin -u root -p $MONGO_ROOT_PASSWORD; then
               echo "MongoDB is ready!"
@@ -46,45 +46,8 @@ jobs:
             sleep 5
           done
 
-          # Optional: list databases created by init scripts
-          docker exec mongo-test mongosh -u root -p $MONGO_ROOT_PASSWORD --eval "db.adminCommand('listDatabases')"
-
       - name: Cleanup Smoke Test
         if: always()
         run: |
           docker stop mongo-test || true
           docker rm mongo-test || true
-
-  deploy-to-server:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy to target server via SSH
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            docker pull ${{ secrets.DOCKER_USERNAME }}/mongo-custom:latest
-            docker stop mongo-prod || true
-            docker rm mongo-prod || true
-            docker run -d --name mongo-prod \
-              -e MONGO_INITDB_ROOT_USERNAME=root \
-              -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }} \
-              -p 27017:27017 ${{ secrets.DOCKER_USERNAME }}/mongo-custom:latest
-
-            # Wait for MongoDB to fully initialize on server
-            echo "Waiting for MongoDB to start on server..."
-            for i in {1..15}; do
-              if docker exec mongo-prod mongosh --eval 'db.runCommand({ping:1})' admin -u root -p ${{ secrets.MONGO_ROOT_PASSWORD }}; then
-                echo "MongoDB is ready on server!"
-                break
-              fi
-              sleep 5
-            done
-
-            # Optional: list databases
-            docker exec mongo-prod mongosh -u root -p ${{ secrets.MONGO_ROOT_PASSWORD }} --eval "db.adminCommand('listDatabases')"
