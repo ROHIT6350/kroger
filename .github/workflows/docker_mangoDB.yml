@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted]   # ensure runner has Docker installed
+    runs-on: [self-hosted, linux, docker]   # ensure runner has Docker
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,14 +30,14 @@ jobs:
 
       - name: Run MongoDB Smoke Test
         env:
-          MONGO_ROOT_PASSWORD: ${{ secrets.MONGO_ROOT_PASSWORD }}
+          MONGO_ROOT_PASSWORD: ${{ secrets.SERVER_PASS }}
         run: |
           docker run -d --name mongo-test \
             -e MONGO_INITDB_ROOT_USERNAME=root \
             -e MONGO_INITDB_ROOT_PASSWORD=$MONGO_ROOT_PASSWORD \
             -p 27017:27017 $IMAGE_NAME:latest
 
-          echo "Waiting for MongoDB..."
+          echo "Waiting for MongoDB and all init scripts..."
           for i in {1..15}; do
             if docker exec mongo-test mongosh --eval 'db.runCommand({ping:1})' admin -u root -p $MONGO_ROOT_PASSWORD; then
               echo "MongoDB is ready!"
@@ -45,6 +45,9 @@ jobs:
             fi
             sleep 5
           done
+
+          # Optional: list databases created by init scripts
+          docker exec mongo-test mongosh -u root -p $MONGO_ROOT_PASSWORD --eval "db.adminCommand('listDatabases')"
 
       - name: Cleanup Smoke Test
         if: always()
@@ -55,7 +58,7 @@ jobs:
   deploy-to-server:
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref == 'refs/heads/main'   # only deploy from main branch
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to target server via SSH
         uses: appleboy/ssh-action@v0.1.10
@@ -72,3 +75,16 @@ jobs:
               -e MONGO_INITDB_ROOT_USERNAME=root \
               -e MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }} \
               -p 27017:27017 ${{ secrets.DOCKER_USERNAME }}/mongo-custom:latest
+
+            # Wait for MongoDB to fully initialize on server
+            echo "Waiting for MongoDB to start on server..."
+            for i in {1..15}; do
+              if docker exec mongo-prod mongosh --eval 'db.runCommand({ping:1})' admin -u root -p ${{ secrets.MONGO_ROOT_PASSWORD }}; then
+                echo "MongoDB is ready on server!"
+                break
+              fi
+              sleep 5
+            done
+
+            # Optional: list databases
+            docker exec mongo-prod mongosh -u root -p ${{ secrets.MONGO_ROOT_PASSWORD }} --eval "db.adminCommand('listDatabases')"
