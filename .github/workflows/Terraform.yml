@@ -4,6 +4,15 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      server_ip:
+        description: 'Target Server IP Address'
+        required: true
+        default: '192.168.0.132'
+      server_user:
+        description: 'Server SSH Username'
+        required: true
+        default: 'rohit'
 
 jobs:
   terraform-docker:
