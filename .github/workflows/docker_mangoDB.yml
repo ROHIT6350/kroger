@@ -1,6 +1,6 @@
 name: Build, Test & Push MongoDB Image
 
-on:
+:
   :
     branches: [ main ]
   workflow_dispatch:
