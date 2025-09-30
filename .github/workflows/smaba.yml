@@ -1,6 +1,6 @@
 name: Install Samba Server
 
-on:
+:
   workflow_dispatch:
     inputs:
       server_ip:
