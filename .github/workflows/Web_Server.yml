@@ -1,6 +1,6 @@
 name: CI for XAMPP Web Server
 
-:
+ :
   :
     branches: [ "main" ]
   workflow_dispatch:   # allow manual trigger
