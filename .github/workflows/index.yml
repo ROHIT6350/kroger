@@ -1,6 +1,6 @@
 name: Deploy file from another repo via SSH key
 
-on:
+:
   workflow_dispatch:
     inputs:
       server_ip:
