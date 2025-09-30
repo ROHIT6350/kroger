@@ -1,6 +1,6 @@
 name: Install XAMPP on Ubuntu Server
 
-on:
+:
   workflow_dispatch:
     inputs:
       server:
