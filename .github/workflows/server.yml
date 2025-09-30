@@ -1,6 +1,6 @@
 name: Install XAMPP Server
 
-on:
+:
   workflow_dispatch:
     inputs:
       server_ip:
