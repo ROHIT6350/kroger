@@ -16,7 +16,7 @@ on:
 
 jobs:
   terraform:
-    runs-on: self-hosted  #runner label
+    runs-on: self-hosted  #runner
 
     steps:
       - name: Checkout repository
