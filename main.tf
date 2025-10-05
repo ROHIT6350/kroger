@@ -1,26 +1,16 @@
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0.2"
-    }
+resource "null_resource" "install_apache" {
+  connection {
+    host        = var.server_ip
+    user        = var.server_user
+    private_key = file("~/.ssh/id_rsa")
   }
-}
 
-provider "docker" {}
-
-resource "docker_image" "apache" {
-  name = "${var.docker_username}/apache-server:latest"
-  build {
-    context = "."
-  }
-}
-
-resource "docker_container" "apache" {
-  name  = "apache-server"
-  image = docker_image.apache.name
-  ports {
-    internal = 80
-    external = 8080
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update -y",
+      "sudo apt install apache2 -y",
+      "sudo systemctl enable apache2",
+      "sudo systemctl start apache2"
+    ]
   }
 }
