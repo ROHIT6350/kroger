@@ -2,7 +2,7 @@ resource "null_resource" "install_apache" {
   connection {
     host        = var.server_ip
     user        = var.server_user
-    private_key = file("~/.ssh/id_rsa")
+    private_key = file(var.private_key_path)
   }
 
   provisioner "remote-exec" {
