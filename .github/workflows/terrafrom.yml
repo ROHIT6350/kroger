@@ -10,32 +10,26 @@ jobs:
     runs-on: self-hosted  # must match your runner label
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.8.5
 
-      # 3️⃣ Setup SSH key from GitHub Secret
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # 4️⃣ Terraform Init
       - name: Terraform Init
         run: terraform init
 
-      # 5️⃣ Terraform Validate
       - name: Terraform Validate
         run: terraform validate
 
-      # 6️⃣ Terraform Plan
       - name: Terraform Plan
         run: |
           terraform plan \
@@ -43,7 +37,6 @@ jobs:
             -var="server_user=${{ secrets.SERVER_USER }}" \
             -var="private_key_path=~/.ssh/id_rsa"
 
-      # 7️⃣ Terraform Apply
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
