@@ -1,0 +1,52 @@
+name: Terraform Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      server_ip:
+        description: "Target Server IP Address"
+        required: true
+        default: "192.168.0.132"
+      server_user:
+        description: "Server SSH Username"
+        required: true
+        default: "rohit"
+
+jobs:
+  terraform:
+    runs-on: self-hosted  # ✅ must match your runner label
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      # 3️⃣ Terraform Init
+      - name: Terraform Init
+        run: terraform init
+
+      # 4️⃣ Terraform Validate
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 5️⃣ Terraform Plan
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="server_ip=${{ github.event.inputs.server_ip }}" \
+            -var="server_user=${{ github.event.inputs.server_user }}"
+
+      # 6️⃣ Terraform Apply
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="server_ip=${{ github.event.inputs.server_ip }}" \
+            -var="server_user=${{ github.event.inputs.server_user }}"
