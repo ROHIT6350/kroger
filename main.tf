@@ -3,6 +3,7 @@ resource "null_resource" "install_apache" {
     host        = var.server_ip
     user        = var.server_user
     private_key = file(var.private_key_path)
+    timeout     = "2m"   # 2-minute connection timeout
   }
 
   provisioner "remote-exec" {
